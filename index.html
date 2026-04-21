@@ -344,19 +344,28 @@ button:active{transform:translateY(1px)}
 </div>
 
 <script>
+
+// Safe storage - falls back to in-memory if localStorage is blocked
+const _memStore = {};
+const safeStorage = {
+  getItem(k){ try{ return safeStorage.getItem(k); }catch(e){ return _memStore[k]??null; } },
+  setItem(k,v){ try{ safeStorage.setItem(k,v); }catch(e){ _memStore[k]=String(v); } },
+  removeItem(k){ try{ safeStorage.removeItem(k); }catch(e){ delete _memStore[k]; } },
+  keys(){ try{ return Object.keys(localStorage); }catch(e){ return Object.keys(_memStore); } }
+};
 const $ = (sel)=>document.querySelector(sel);
 const $$ = (sel)=>document.querySelectorAll(sel);
 
 const state = {
   settings: {
-    bgmOn: localStorage.getItem('mg_bgm') === '1',
-    sfxOn: localStorage.getItem('mg_sfx') !== '0'
+    bgmOn: safeStorage.getItem('mg_bgm') === '1',
+    sfxOn: safeStorage.getItem('mg_sfx') !== '0'
   },
   circle: {
-    best: Number(localStorage.getItem('circle_best') || 0),
-    level: Number(localStorage.getItem('circle_level') || 1),
-    ranking: JSON.parse(localStorage.getItem('circle_ranking') || '[0,0,0]'),
-    selectedTime: Number(localStorage.getItem('circle_time') || 5),
+    best: Number(safeStorage.getItem('circle_best') || 0),
+    level: Number(safeStorage.getItem('circle_level') || 1),
+    ranking: JSON.parse(safeStorage.getItem('circle_ranking') || '[0,0,0]'),
+    selectedTime: Number(safeStorage.getItem('circle_time') || 5),
     combo: 0,
     timeLeft: 5,
     score: 0,
@@ -371,17 +380,17 @@ const state = {
     target: {cx:0,cy:0,r:0}
   },
   timing: {
-    bestDiff: Number(localStorage.getItem('timing_best') || 99),
-    tries: Number(localStorage.getItem('timing_tries') || 0),
+    bestDiff: Number(safeStorage.getItem('timing_best') || 99),
+    tries: Number(safeStorage.getItem('timing_tries') || 0),
     running: false,
     startAt: 0,
     timerId: null,
     now: 0,
   },
   reaction: {
-    best: Number(localStorage.getItem('reaction_best') || 0),
-    tries: Number(localStorage.getItem('reaction_tries') || 0),
-    history: JSON.parse(localStorage.getItem('reaction_history') || '[]'),
+    best: Number(safeStorage.getItem('reaction_best') || 0),
+    tries: Number(safeStorage.getItem('reaction_tries') || 0),
+    history: JSON.parse(safeStorage.getItem('reaction_history') || '[]'),
     phase: 'idle',
     startTimeout: null,
     greenAt: 0,
@@ -396,8 +405,8 @@ let bgmOsc = null;
 let bgmGain = null;
 
 function saveSettings(){
-  localStorage.setItem('mg_bgm', state.settings.bgmOn ? '1' : '0');
-  localStorage.setItem('mg_sfx', state.settings.sfxOn ? '1' : '0');
+  safeStorage.setItem('mg_bgm', state.settings.bgmOn ? '1' : '0');
+  safeStorage.setItem('mg_sfx', state.settings.sfxOn ? '1' : '0');
 }
 function audioCtx(){
   if(!audioContextRef) audioContextRef = new (window.AudioContext || window.webkitAudioContext)();
@@ -558,17 +567,17 @@ function circleBurst(color){
   for(let i=0;i<count;i++){ const p=document.createElement('div'); p.className='particle'; p.style.background = i%3===0?color:(i%3===1?'#ffd54a':'#ff8cc6'); p.style.left='50%'; p.style.top='50%'; const ang=(Math.PI*2*i)/count; const d=60+Math.random()*70; p.style.setProperty('--tx', `${Math.cos(ang)*d}px`); p.style.setProperty('--ty', `${Math.sin(ang)*d}px`); circle.burstEl.appendChild(p); }
   setTimeout(()=> circle.burstEl.innerHTML='', 800);
 }
-function updateCircleRanking(score){ state.circle.ranking.push(score); state.circle.ranking = state.circle.ranking.sort((a,b)=>b-a).slice(0,3); localStorage.setItem('circle_ranking', JSON.stringify(state.circle.ranking)); }
+function updateCircleRanking(score){ state.circle.ranking.push(score); state.circle.ranking = state.circle.ranking.sort((a,b)=>b-a).slice(0,3); safeStorage.setItem('circle_ranking', JSON.stringify(state.circle.ranking)); }
 function finishCircle(byTimeout=false){
   if(state.circle.roundEnded) return;
   state.circle.roundEnded = true; state.circle.gameActive = false; clearInterval(state.circle.timerId);
   const result = evaluateCircle();
   state.circle.score = result.score; state.circle.stars = result.stars;
-  if(result.score > state.circle.best){ state.circle.best = result.score; localStorage.setItem('circle_best', state.circle.best); }
+  if(result.score > state.circle.best){ state.circle.best = result.score; safeStorage.setItem('circle_best', state.circle.best); }
   updateCircleRanking(result.score);
   if(result.success){ state.circle.combo += 1; successSound(false); circleBurst('#7be0c3'); }
   else { state.circle.combo = 0; failSound(); }
-  if(state.circle.combo >= 3){ state.circle.combo = 0; state.circle.level += 1; localStorage.setItem('circle_level', state.circle.level); successSound(true); circleBurst('#ffd54a'); circle.msgEl.textContent = '🎉 레벨 업! 다음 원은 더 까다로워집니다.'; }
+  if(state.circle.combo >= 3){ state.circle.combo = 0; state.circle.level += 1; safeStorage.setItem('circle_level', state.circle.level); successSound(true); circleBurst('#ffd54a'); circle.msgEl.textContent = '🎉 레벨 업! 다음 원은 더 까다로워집니다.'; }
   else { circle.msgEl.textContent = byTimeout && state.circle.points.length===0 ? '시간이 끝났어요! 다시 도전해 보세요.' : result.text; }
   updateCircleUI(); updateHomeStats();
 }
@@ -588,15 +597,15 @@ function runCircleCountdown(){
 }
 function beginCircleRound(){ state.circle.points=[]; state.circle.roundEnded=false; setupCircleTarget(); drawCircle(); state.circle.gameActive=true; circle.msgEl.textContent = `지금부터 ${state.circle.selectedTime}초! 원을 한 바퀴 부드럽게 그려 보세요.`; startCircleTimer(); }
 function startCircleGame(){ clickSound(); if(state.circle.countdownActive) return; clearInterval(state.circle.timerId); state.circle.gameActive=false; state.circle.roundEnded=false; state.circle.points=[]; state.circle.score=0; state.circle.stars=0; drawCircle(); updateCircleUI(); runCircleCountdown(); }
-function resetCircleProgress(){ clickSound(); clearInterval(state.circle.timerId); Object.assign(state.circle,{combo:0, level:1, best:0, ranking:[0,0,0], selectedTime:5, timeLeft:5, score:0, stars:0, points:[], gameActive:false, countdownActive:false, roundEnded:false, showGuide:true}); localStorage.setItem('circle_level','1'); localStorage.setItem('circle_best','0'); localStorage.setItem('circle_ranking','[0,0,0]'); localStorage.setItem('circle_time','5'); circle.msgEl.textContent='초기화했습니다. 레벨 1, 최고 점수 0점으로 돌아갔습니다.'; updateCircleUI(); fitCircleCanvas(); updateHomeStats(); }
+function resetCircleProgress(){ clickSound(); clearInterval(state.circle.timerId); Object.assign(state.circle,{combo:0, level:1, best:0, ranking:[0,0,0], selectedTime:5, timeLeft:5, score:0, stars:0, points:[], gameActive:false, countdownActive:false, roundEnded:false, showGuide:true}); safeStorage.setItem('circle_level','1'); safeStorage.setItem('circle_best','0'); safeStorage.setItem('circle_ranking','[0,0,0]'); safeStorage.setItem('circle_time','5'); circle.msgEl.textContent='초기화했습니다. 레벨 1, 최고 점수 0점으로 돌아갔습니다.'; updateCircleUI(); fitCircleCanvas(); updateHomeStats(); }
 $('#circleStartBtn').addEventListener('click', startCircleGame);
 $('#circleRetryBtn').addEventListener('click', startCircleGame);
-$('#circleNextBtn').addEventListener('click', ()=>{ clickSound(); state.circle.level += 1; localStorage.setItem('circle_level', state.circle.level); state.circle.combo = 0; circle.msgEl.textContent = `레벨 ${state.circle.level}로 이동했습니다. 시작 버튼을 눌러 도전하세요.`; updateCircleUI(); fitCircleCanvas(); });
+$('#circleNextBtn').addEventListener('click', ()=>{ clickSound(); state.circle.level += 1; safeStorage.setItem('circle_level', state.circle.level); state.circle.combo = 0; circle.msgEl.textContent = `레벨 ${state.circle.level}로 이동했습니다. 시작 버튼을 눌러 도전하세요.`; updateCircleUI(); fitCircleCanvas(); });
 $('#circleResetBtn').addEventListener('click', resetCircleProgress);
 $('#circleClearBtn').addEventListener('click', ()=>{ clickSound(); state.circle.points=[]; drawCircle(); circle.msgEl.textContent = state.circle.gameActive ? '그림을 지웠어요. 남은 시간 안에 다시 그려 보세요.' : '그림을 지웠어요. 다시 시작해 보세요.'; });
 $('#circleGuideBtn').addEventListener('click', ()=>{ clickSound(); state.circle.showGuide=!state.circle.showGuide; updateCircleUI(); drawCircle(); });
-$('#circleTime5').addEventListener('click', ()=>{ clickSound(); state.circle.selectedTime=5; state.circle.timeLeft=5; localStorage.setItem('circle_time','5'); updateCircleUI(); circle.msgEl.textContent='5초 모드로 설정했습니다.'; });
-$('#circleTime10').addEventListener('click', ()=>{ clickSound(); state.circle.selectedTime=10; state.circle.timeLeft=10; localStorage.setItem('circle_time','10'); updateCircleUI(); circle.msgEl.textContent='10초 모드로 설정했습니다.'; });
+$('#circleTime5').addEventListener('click', ()=>{ clickSound(); state.circle.selectedTime=5; state.circle.timeLeft=5; safeStorage.setItem('circle_time','5'); updateCircleUI(); circle.msgEl.textContent='5초 모드로 설정했습니다.'; });
+$('#circleTime10').addEventListener('click', ()=>{ clickSound(); state.circle.selectedTime=10; state.circle.timeLeft=10; safeStorage.setItem('circle_time','10'); updateCircleUI(); circle.msgEl.textContent='10초 모드로 설정했습니다.'; });
 function beginCirclePointer(e){ if(!state.circle.gameActive || state.circle.countdownActive || state.circle.roundEnded) return; e.preventDefault(); state.circle.drawing=true; state.circle.points=[circlePos(e)]; drawCircle(); }
 function moveCirclePointer(e){ if(!state.circle.drawing || !state.circle.gameActive) return; e.preventDefault(); const p = circlePos(e); const last = state.circle.points[state.circle.points.length-1]; if(!last || dist(last,p)>1.4){ state.circle.points.push(p); drawCircle(); } }
 function endCirclePointer(e){ if(!state.circle.drawing) return; e.preventDefault(); state.circle.drawing=false; }
@@ -623,16 +632,16 @@ function startTimingGame(){
 }
 function stopTimingGame(){
   clickSound(); if(!state.timing.running) return;
-  clearInterval(state.timing.timerId); state.timing.running = false; state.timing.tries += 1; localStorage.setItem('timing_tries', state.timing.tries);
+  clearInterval(state.timing.timerId); state.timing.running = false; state.timing.tries += 1; safeStorage.setItem('timing_tries', state.timing.tries);
   const now = (performance.now() - state.timing.startAt)/1000; const diff = Math.abs(3 - now);
   let stars = diff <= .05 ? 3 : diff <= .15 ? 2 : diff <= .30 ? 1 : 0;
-  timing.displayEl.textContent = now.toFixed(2); timing.subEl.textContent = diff === 0 ? '완벽!' : `${diff.toFixed(2)}초 차이`;
-  if(diff < state.timing.bestDiff){ state.timing.bestDiff = diff; localStorage.setItem('timing_best', diff); }
+  timing.displayEl.textContent = now.toFixed(2); timing.subEl.textContent = diff < 0.001 ? '완벽!' : `${diff.toFixed(2)}초 차이`;
+  if(diff < state.timing.bestDiff){ state.timing.bestDiff = diff; safeStorage.setItem('timing_best', diff); }
   timing.msgEl.textContent = diff <= .05 ? '정말 정확해요! 거의 완벽합니다.' : diff <= .15 ? '아주 좋아요! 타이밍 감각이 뛰어나네요.' : diff <= .30 ? '좋아요! 조금만 더 맞추면 됩니다.' : '조금 빨랐거나 늦었어요. 다시 도전해 보세요.';
   if(stars > 0) successSound(false); else failSound();
   updateTimingUI(now, diff, stars); updateHomeStats();
 }
-function resetTimingGame(){ clickSound(); clearInterval(state.timing.timerId); state.timing.running=false; state.timing.bestDiff=99; state.timing.tries=0; localStorage.removeItem('timing_best'); localStorage.removeItem('timing_tries'); resetTimingDisplay(); timing.msgEl.textContent='초기화했습니다. 다시 3초에 도전해 보세요.'; updateTimingUI(0,0,0); updateHomeStats(); }
+function resetTimingGame(){ clickSound(); clearInterval(state.timing.timerId); state.timing.running=false; state.timing.bestDiff=99; state.timing.tries=0; safeStorage.removeItem('timing_best'); safeStorage.removeItem('timing_tries'); resetTimingDisplay(); timing.msgEl.textContent='초기화했습니다. 다시 3초에 도전해 보세요.'; updateTimingUI(0,0,0); updateHomeStats(); }
 $('#timingStartBtn').addEventListener('click', startTimingGame);
 $('#timingStopBtn').addEventListener('click', stopTimingGame);
 $('#timingResetBtn').addEventListener('click', resetTimingGame);
@@ -665,19 +674,19 @@ function tapReaction(){
   const ms = Math.round(performance.now() - state.reaction.greenAt);
   state.reaction.phase = 'idle'; state.reaction.tries += 1; state.reaction.history.push(ms); state.reaction.history = state.reaction.history.slice(-20);
   if(state.reaction.best === 0 || ms < state.reaction.best) state.reaction.best = ms;
-  localStorage.setItem('reaction_best', state.reaction.best); localStorage.setItem('reaction_tries', state.reaction.tries); localStorage.setItem('reaction_history', JSON.stringify(state.reaction.history));
+  safeStorage.setItem('reaction_best', state.reaction.best); safeStorage.setItem('reaction_tries', state.reaction.tries); safeStorage.setItem('reaction_history', JSON.stringify(state.reaction.history));
   setReactionArea('reaction-go', `${ms} ms`);
   reaction.msgEl.textContent = ms <= 250 ? '엄청 빠릅니다! 순발력이 아주 좋네요.' : ms <= 350 ? '좋아요! 반응이 빠른 편입니다.' : '괜찮아요. 한 번 더 도전하면 더 빨라질 수 있어요.';
   successSound(false); updateReactionUI(ms); updateHomeStats();
 }
-function resetReactionGame(){ clickSound(); clearTimeout(state.reaction.startTimeout); state.reaction = { ...state.reaction, best:0, tries:0, history:[], phase:'idle', startTimeout:null, greenAt:0, now:0 }; localStorage.removeItem('reaction_best'); localStorage.removeItem('reaction_tries'); localStorage.removeItem('reaction_history'); setReactionArea('reaction-wait','시작을 눌러 준비하세요'); reaction.msgEl.textContent='초기화했습니다. 다시 시작해 보세요.'; updateReactionUI(0); updateHomeStats(); }
+function resetReactionGame(){ clickSound(); clearTimeout(state.reaction.startTimeout); state.reaction = { ...state.reaction, best:0, tries:0, history:[], phase:'idle', startTimeout:null, greenAt:0, now:0 }; safeStorage.removeItem('reaction_best'); safeStorage.removeItem('reaction_tries'); safeStorage.removeItem('reaction_history'); setReactionArea('reaction-wait','시작을 눌러 준비하세요'); reaction.msgEl.textContent='초기화했습니다. 다시 시작해 보세요.'; updateReactionUI(0); updateHomeStats(); }
 $('#reactionStartBtn').addEventListener('click', startReactionGame);
 $('#reactionTapBtn').addEventListener('click', tapReaction);
 $('#reactionArea').addEventListener('click', tapReaction);
 $('#reactionResetBtn').addEventListener('click', resetReactionGame);
 
 function resetAllData(){
-  Object.keys(localStorage).forEach(k=>{ if(k.startsWith('circle_') || k.startsWith('timing_') || k.startsWith('reaction_') || k === 'mg_bgm' || k === 'mg_sfx') localStorage.removeItem(k); });
+  safeStorage.keys().forEach(k=>{ if(k.startsWith('circle_') || k.startsWith('timing_') || k.startsWith('reaction_') || k === 'mg_bgm' || k === 'mg_sfx') safeStorage.removeItem(k); });
   state.settings = { bgmOn:false, sfxOn:true };
   Object.assign(state.circle, { best:0, level:1, ranking:[0,0,0], selectedTime:5, combo:0, timeLeft:5, score:0, stars:0, showGuide:true, drawing:false, points:[], gameActive:false, countdownActive:false, roundEnded:false, timerId:null });
   state.timing = { bestDiff:99, tries:0, running:false, startAt:0, timerId:null, now:0 };
