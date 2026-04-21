@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+<title>미니게임 모음집</title>
+<style>
+:root{
+  --bg1:#eef5ff;
+  --bg2:#fff7fb;
+  --card:#ffffff;
+  --text:#23324a;
+  --sub:#6e7b94;
+  --blue:#6c9cff;
+  --blue-deep:#4f7eff;
+  --pink:#ff8cc6;
+  --pink-deep:#ff6db5;
+  --yellow:#ffd54a;
+  --mint:#78dfc0;
+  --danger:#ff7f7f;
+  --line:#e5ebf7;
+  --shadow:0 10px 28px rgba(79,126,255,.14);
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:"Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  color:var(--text);
+  background:linear-gradient(180deg,var(--bg1),var(--bg2));
+  overflow:auto;
+}
+.app{
+  max-width:560px;
+  min-height:100svh;
+  margin:0 auto;
+  padding:calc(8px + var(--safe-top)) 8px calc(10px + var(--safe-bottom));
+}
+.screen{display:none; gap:8px;}
+.screen.active{display:grid;}
+.header{
+  background:linear-gradient(135deg,var(--blue-deep),var(--pink));
+  color:#fff;
+  border-radius:20px;
+  padding:12px 14px;
+  box-shadow:var(--shadow);
+  position:relative;
+  overflow:hidden;
+}
+.header:before,.header:after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.16)}
+.header:before{width:120px;height:120px;right:-35px;top:-45px}
+.header:after{width:84px;height:84px;left:-24px;bottom:-34px}
+.header-row,.game-top{
+  position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center;gap:8px;
+}
+.header h1,.game-title{margin:0;font-size:22px;font-weight:900;letter-spacing:-.3px}
+.sub{position:relative;z-index:1;margin-top:6px;font-size:12px;line-height:1.4;opacity:.95}
+.badge{background:rgba(255,255,255,.2);padding:6px 10px;border-radius:999px;font-size:12px;font-weight:900;white-space:nowrap}
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px;box-shadow:0 8px 20px rgba(30,41,59,.05)
+}
+.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.menu-card{
+  background:linear-gradient(180deg,#fff,#f9fbff);
+  border:1px solid var(--line);border-radius:18px;padding:14px 12px;min-height:134px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 8px 20px rgba(30,41,59,.05)
+}
+.menu-card h3{margin:0;font-size:18px}
+.menu-card p{margin:6px 0 0;color:var(--sub);font-size:12px;line-height:1.35}
+.menu-card .meta{color:#3d5ccc;font-size:12px;font-weight:800}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.small-stat{background:#f9fbff;border:1px solid #edf2fb;border-radius:14px;padding:10px;text-align:center}
+.small-stat .label{font-size:11px;color:var(--sub);margin-bottom:4px}
+.small-stat .value{font-size:18px;font-weight:900}
+.toggle-row,.time-pick,.game-buttons,.game-buttons-2{display:grid;gap:6px}
+.toggle-row,.time-pick{grid-template-columns:1fr 1fr}
+.game-buttons,.game-buttons-2{grid-template-columns:repeat(3,1fr)}
+button{
+  min-height:42px;border:none;border-radius:14px;font-size:13px;font-weight:900;cursor:pointer;box-shadow:0 4px 10px rgba(30,41,59,.06)
+}
+button:active{transform:translateY(1px)}
+.primary{background:linear-gradient(135deg,var(--blue-deep),var(--blue));color:#fff}
+.soft{background:#eef4ff;color:#3658ca}
+.warn{background:#fff0f0;color:#c54848}
+.good{background:#eefcf6;color:#16896b}
+.gold{background:#fff8df;color:#9c6d00}
+.purple{background:#f5f0ff;color:#6c45c3}
+.gray{background:#f6f7fb;color:#5d6473}
+.time-btn.active,.option-btn.active{background:linear-gradient(135deg,var(--blue-deep),var(--blue));color:#fff}
+.message{
+  min-height:40px;display:flex;align-items:center;justify-content:center;text-align:center;background:linear-gradient(180deg,#fff,#f9fbff);border:1px solid var(--line);border-radius:14px;padding:8px 10px;font-size:12px;line-height:1.35;color:#345
+}
+.canvas-wrap,.play-wrap{
+  position:relative;border-radius:22px;overflow:hidden;box-shadow:0 10px 24px rgba(30,41,59,.08);background:linear-gradient(180deg,#fff,#f8fbff)
+}
+.canvas-wrap{min-height:320px}
+#circleCanvas,#reactionArea,#timingArea{display:block;width:100%;height:100%}
+#circleCanvas{touch-action:none;background:radial-gradient(circle at center, rgba(108,156,255,.05) 0 2px, transparent 2px 100%),linear-gradient(180deg,#fff 0%,#f8fbff 100%)}
+.legend{position:absolute;top:8px;left:8px;display:flex;flex-wrap:wrap;gap:6px;pointer-events:none;z-index:2}
+.chip{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.88);border:1px solid rgba(228,235,246,.95);border-radius:999px;padding:4px 8px;font-size:11px;color:var(--sub)}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.dot.target{background:#bdd1ff;border:1px solid #86aafc}.dot.trace{background:var(--blue-deep)}.dot.center{background:#ffbe33}
+.overlay-center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.countdown{font-size:min(26vw,96px);font-weight:1000;color:var(--pink-deep);text-shadow:0 6px 18px rgba(255,105,180,.25);transform:scale(.8);opacity:0;transition:.18s ease}
+.countdown.show{transform:scale(1);opacity:1}
+.burst{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.particle{position:absolute;width:10px;height:10px;border-radius:50%;opacity:.9;animation:pop .7s ease-out forwards}
+@keyframes pop{0%{transform:translate(0,0) scale(.6);opacity:0}20%{opacity:1}100%{transform:translate(var(--tx),var(--ty)) scale(1.2);opacity:0}}
+.game-header{display:grid;gap:8px}
+.game-top .left{display:flex;align-items:center;gap:8px}
+.back-btn{min-height:36px;padding:0 12px;border-radius:12px}
+.inline-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.inline-stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:7px 5px;text-align:center}
+.inline-stat .label{font-size:10px;color:var(--sub);margin-bottom:4px;white-space:nowrap}.inline-stat .value{font-size:17px;font-weight:900}
+.stars{letter-spacing:1px;color:#f5b700;font-size:17px;min-height:20px;text-align:right}
+.ranking{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:16px;padding:9px 10px}
+.rank-list{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}.rank-item{background:#f9fbff;border:1px solid #edf2fb;border-radius:12px;padding:7px 8px;text-align:center;font-size:12px}.rank-item b{display:block;font-size:16px;margin-top:2px}
+.big-center{display:flex;align-items:center;justify-content:center;text-align:center;height:100%;font-weight:1000;font-size:48px;color:#40516d}
+.timing-readout{font-size:42px;font-weight:1000;color:#4f7eff}.diff-readout{font-size:16px;font-weight:900;color:#ff6db5;margin-top:8px}
+.reaction-box{display:flex;align-items:center;justify-content:center;height:100%;font-size:30px;font-weight:1000;text-align:center;padding:16px;color:#fff}
+.reaction-wait{background:linear-gradient(180deg,#8799bb,#7082a8)}
+.reaction-go{background:linear-gradient(180deg,#6fe1b9,#39c89b)}
+.reaction-fail{background:linear-gradient(180deg,#ff9a9a,#ff7c7c)}
+.footer{text-align:center;font-size:11px;color:var(--sub)}
+.hidden{display:none !important}
+@media (max-width:390px){
+  .header h1,.game-title{font-size:20px}
+  .inline-stat .value,.small-stat .value{font-size:15px}
+  .menu-card{min-height:126px}
+  button{font-size:12px;min-height:40px}
+}
+@media (orientation:landscape) and (max-height:540px){
+  .sub,.message{display:none}
+  .canvas-wrap{min-height:240px}
+  .inline-stat .value{font-size:14px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="screen active" id="homeScreen">
+    <div class="header">
+      <div class="header-row">
+        <h1>🎮 미니게임 모음집</h1>
+        <div class="badge">모바일 최적화</div>
+      </div>
+      <div class="sub">짧고 직관적인 미니게임으로 바로 참여할 수 있습니다. 원하는 게임을 눌러 시작하세요.</div>
+    </div>
+
+    <div class="card">
+      <div class="menu-grid">
+        <button class="menu-card" data-open="circleScreen">
+          <div>
+            <h3>⭕ 원 그리기</h3>
+            <p>원을 최대한 예쁘고 둥글게 그려 점수를 얻는 게임</p>
+          </div>
+          <div class="meta">정확도 · 콤보 · 레벨</div>
+        </button>
+        <button class="menu-card" data-open="timingScreen">
+          <div>
+            <h3>⏱️ 3초 맞추기</h3>
+            <p>3초라고 느껴지는 순간 멈춰 정확도를 겨룹니다</p>
+          </div>
+          <div class="meta">타이밍 · 감각 · 몰입</div>
+        </button>
+        <button class="menu-card" data-open="reactionScreen">
+          <div>
+            <h3>⚡ 반응속도</h3>
+            <p>화면이 바뀌는 순간 빠르게 눌러 반응 시간을 확인</p>
+          </div>
+          <div class="meta">집중 · 순발력 · 경쟁</div>
+        </button>
+        <div class="menu-card" style="justify-content:center;align-items:center;text-align:center;background:linear-gradient(180deg,#fffdf6,#fff8df)">
+          <div>
+            <h3>🌟 활용 팁</h3>
+            <p>다모임에서는 5~7분만 운영해도 분위기를 빠르게 살릴 수 있습니다.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="stats-grid">
+        <div class="small-stat"><div class="label">원 그리기 최고</div><div class="value" id="homeCircleBest">0</div></div>
+        <div class="small-stat"><div class="label">3초 맞추기 최고</div><div class="value" id="homeTimingBest">0.00</div></div>
+        <div class="small-stat"><div class="label">반응속도 최고</div><div class="value" id="homeReactionBest">0</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="toggle-row">
+        <button class="option-btn purple" id="bgmToggleBtn">🔈 BGM OFF</button>
+        <button class="option-btn gray" id="sfxToggleBtn">🔔 효과음 ON</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="game-buttons-2">
+        <button class="gray" id="resetAllBtn">전체 기록 초기화</button>
+        <button class="soft" id="howToBtn">활용 안내</button>
+        <button class="primary" id="quickStartBtn">바로 시작</button>
+      </div>
+    </div>
+
+    <div class="message" id="homeMessage">원 그리기부터 시작하면 가장 자연스럽게 분위기를 띄울 수 있습니다.</div>
+    <div class="footer">한 파일로 실행되는 모바일 미니게임 모음집</div>
+  </section>
+
+  <section class="screen" id="circleScreen">
+    <div class="game-header">
+      <div class="header">
+        <div class="game-top">
+          <div class="left">
+            <button class="back-btn soft" data-back>홈</button>
+            <div class="game-title">⭕ 원 그리기</div>
+          </div>
+          <div class="badge" id="circleModeBadge">⏱️ 5초 모드</div>
+        </div>
+        <div class="sub">기준 원을 보고 최대한 비슷하게 한 바퀴 그려 보세요.</div>
+      </div>
+
+      <div class="time-pick">
+        <button class="time-btn active" id="circleTime5">5초</button>
+        <button class="time-btn" id="circleTime10">10초</button>
+      </div>
+
+      <div class="inline-stats">
+        <div class="inline-stat"><div class="label">점수</div><div class="value" id="circleScore">0</div></div>
+        <div class="inline-stat"><div class="label">최고</div><div class="value" id="circleBest">0</div></div>
+        <div class="inline-stat"><div class="label">콤보</div><div class="value" id="circleCombo">0</div></div>
+        <div class="inline-stat"><div class="label">레벨</div><div class="value" id="circleLevel">1</div></div>
+        <div class="inline-stat"><div class="label">남은 시간</div><div class="value" id="circleTimer">5</div></div>
+      </div>
+
+      <div class="message" id="circleMessage">시작 버튼을 누르면 카운트다운 뒤 게임이 시작됩니다.</div>
+
+      <div class="canvas-wrap" id="circleWrap">
+        <div class="legend">
+          <span class="chip"><span class="dot target"></span>기준 원</span>
+          <span class="chip"><span class="dot trace"></span>내 선</span>
+          <span class="chip"><span class="dot center"></span>중심</span>
+        </div>
+        <canvas id="circleCanvas"></canvas>
+        <div class="overlay-center"><div class="countdown" id="circleCountdown"></div></div>
+        <div class="burst" id="circleBurst"></div>
+      </div>
+
+      <div class="game-buttons">
+        <button class="primary" id="circleStartBtn">시작</button>
+        <button class="soft" id="circleGuideBtn">기준 원 숨기기</button>
+        <button class="warn" id="circleClearBtn">지우기</button>
+      </div>
+      <div class="game-buttons-2">
+        <button class="good" id="circleRetryBtn">다시 하기</button>
+        <button class="gold" id="circleNextBtn">다음 레벨</button>
+        <button class="gray" id="circleResetBtn">초기화</button>
+      </div>
+      <div class="ranking">
+        <div class="game-top" style="margin-bottom:6px"><div style="font-size:13px;font-weight:900">🏆 내 랭킹</div><div class="stars" id="circleStars">☆☆☆</div></div>
+        <div class="rank-list">
+          <div class="rank-item">1등<b id="circleRank1">0</b></div>
+          <div class="rank-item">2등<b id="circleRank2">0</b></div>
+          <div class="rank-item">3등<b id="circleRank3">0</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="timingScreen">
+    <div class="game-header">
+      <div class="header">
+        <div class="game-top">
+          <div class="left">
+            <button class="back-btn soft" data-back>홈</button>
+            <div class="game-title">⏱️ 3초 맞추기</div>
+          </div>
+          <div class="badge">정확도 게임</div>
+        </div>
+        <div class="sub">시작 후 몸으로 3초를 느껴 보고, 정확하다고 생각되는 순간 멈추세요.</div>
+      </div>
+
+      <div class="inline-stats">
+        <div class="inline-stat"><div class="label">현재 기록</div><div class="value" id="timingNow">0.00</div></div>
+        <div class="inline-stat"><div class="label">오차</div><div class="value" id="timingDiff">0.00</div></div>
+        <div class="inline-stat"><div class="label">최고 정확도</div><div class="value" id="timingBest">0.00</div></div>
+        <div class="inline-stat"><div class="label">도전 횟수</div><div class="value" id="timingTries">0</div></div>
+        <div class="inline-stat"><div class="label">별점</div><div class="value" id="timingStars">☆☆☆</div></div>
+      </div>
+
+      <div class="message" id="timingMessage">시작을 누르고 3초라고 느껴지는 순간 정지 버튼을 눌러 보세요.</div>
+
+      <div class="play-wrap" style="height:340px" id="timingWrap">
+        <div id="timingArea" class="big-center">
+          <div>
+            <div class="timing-readout" id="timingDisplay">3.00</div>
+            <div class="diff-readout" id="timingSub">준비 완료</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="game-buttons">
+        <button class="primary" id="timingStartBtn">시작</button>
+        <button class="gold" id="timingStopBtn">정지</button>
+        <button class="warn" id="timingResetBtn">초기화</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="reactionScreen">
+    <div class="game-header">
+      <div class="header">
+        <div class="game-top">
+          <div class="left">
+            <button class="back-btn soft" data-back>홈</button>
+            <div class="game-title">⚡ 반응속도</div>
+          </div>
+          <div class="badge">순발력 게임</div>
+        </div>
+        <div class="sub">시작 후 잠시 기다리다가 화면이 바뀌면 즉시 터치하세요. 너무 빨리 누르면 실패입니다.</div>
+      </div>
+
+      <div class="inline-stats">
+        <div class="inline-stat"><div class="label">현재 기록</div><div class="value" id="reactionNow">0</div></div>
+        <div class="inline-stat"><div class="label">최고 기록</div><div class="value" id="reactionBest">0</div></div>
+        <div class="inline-stat"><div class="label">평균</div><div class="value" id="reactionAvg">0</div></div>
+        <div class="inline-stat"><div class="label">도전 횟수</div><div class="value" id="reactionTries">0</div></div>
+        <div class="inline-stat"><div class="label">상태</div><div class="value" id="reactionState">대기</div></div>
+      </div>
+
+      <div class="message" id="reactionMessage">시작 버튼을 누른 뒤 기다리세요. 초록색으로 바뀌면 바로 누르면 됩니다.</div>
+
+      <div class="play-wrap" style="height:340px" id="reactionWrap">
+        <div id="reactionArea" class="reaction-box reaction-wait">시작을 눌러 준비하세요</div>
+      </div>
+
+      <div class="game-buttons">
+        <button class="primary" id="reactionStartBtn">시작</button>
+        <button class="gold" id="reactionTapBtn">지금 누르기</button>
+        <button class="warn" id="reactionResetBtn">초기화</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const $ = (sel)=>document.querySelector(sel);
+const $$ = (sel)=>document.querySelectorAll(sel);
+
+const state = {
+  settings: {
+    bgmOn: localStorage.getItem('mg_bgm') === '1',
+    sfxOn: localStorage.getItem('mg_sfx') !== '0'
+  },
+  circle: {
+    best: Number(localStorage.getItem('circle_best') || 0),
+    level: Number(localStorage.getItem('circle_level') || 1),
+    ranking: JSON.parse(localStorage.getItem('circle_ranking') || '[0,0,0]'),
+    selectedTime: Number(localStorage.getItem('circle_time') || 5),
+    combo: 0,
+    timeLeft: 5,
+    score: 0,
+    stars: 0,
+    showGuide: true,
+    drawing: false,
+    points: [],
+    gameActive: false,
+    countdownActive: false,
+    roundEnded: false,
+    timerId: null,
+    target: {cx:0,cy:0,r:0}
+  },
+  timing: {
+    bestDiff: Number(localStorage.getItem('timing_best') || 99),
+    tries: Number(localStorage.getItem('timing_tries') || 0),
+    running: false,
+    startAt: 0,
+    timerId: null,
+    now: 0,
+  },
+  reaction: {
+    best: Number(localStorage.getItem('reaction_best') || 0),
+    tries: Number(localStorage.getItem('reaction_tries') || 0),
+    history: JSON.parse(localStorage.getItem('reaction_history') || '[]'),
+    phase: 'idle',
+    startTimeout: null,
+    greenAt: 0,
+    now: 0,
+  }
+};
+if (![5,10].includes(state.circle.selectedTime)) state.circle.selectedTime = 5;
+state.circle.timeLeft = state.circle.selectedTime;
+
+let audioContextRef = null;
+let bgmOsc = null;
+let bgmGain = null;
+
+function saveSettings(){
+  localStorage.setItem('mg_bgm', state.settings.bgmOn ? '1' : '0');
+  localStorage.setItem('mg_sfx', state.settings.sfxOn ? '1' : '0');
+}
+function audioCtx(){
+  if(!audioContextRef) audioContextRef = new (window.AudioContext || window.webkitAudioContext)();
+  return audioContextRef;
+}
+function playTone(freq, duration, type='sine', volume=0.05, when=0){
+  if(!state.settings.sfxOn) return;
+  const a = audioCtx();
+  const now = a.currentTime + when;
+  const o = a.createOscillator();
+  const g = a.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, now);
+  g.gain.setValueAtTime(0.0001, now);
+  g.gain.exponentialRampToValueAtTime(volume, now + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+  o.connect(g); g.connect(a.destination); o.start(now); o.stop(now + duration + 0.03);
+}
+function successSound(levelup=false){ playTone(660,.14,'triangle',.05,0); playTone(880,.16,'triangle',.05,.10); if(levelup) playTone(1175,.22,'triangle',.06,.22); }
+function failSound(){ playTone(250,.18,'sawtooth',.04,0); playTone(180,.22,'sawtooth',.03,.11); }
+function clickSound(){ playTone(520,.06,'triangle',.03,0); }
+function updateSettingButtons(){
+  $('#bgmToggleBtn').textContent = state.settings.bgmOn ? '🔊 BGM ON' : '🔈 BGM OFF';
+  $('#sfxToggleBtn').textContent = state.settings.sfxOn ? '🔔 효과음 ON' : '🔕 효과음 OFF';
+}
+function startBgm(){
+  const a = audioCtx();
+  stopBgm();
+  bgmOsc = a.createOscillator();
+  bgmGain = a.createGain();
+  bgmOsc.type = 'sine';
+  bgmOsc.frequency.value = 220;
+  bgmGain.gain.value = 0.016;
+  bgmOsc.connect(bgmGain); bgmGain.connect(a.destination); bgmOsc.start();
+}
+function stopBgm(){
+  if(bgmOsc){ try{bgmOsc.stop();}catch(e){} bgmOsc.disconnect(); bgmOsc=null; }
+  if(bgmGain){ bgmGain.disconnect(); bgmGain=null; }
+}
+function applyBgm(){ if(state.settings.bgmOn) startBgm(); else stopBgm(); updateSettingButtons(); }
+
+function showScreen(id){
+  $$('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  if(id === 'circleScreen') setTimeout(fitCircleCanvas,50);
+}
+$$('[data-open]').forEach(btn=>btn.addEventListener('click', ()=>{ clickSound(); showScreen(btn.dataset.open); }));
+$$('[data-back]').forEach(btn=>btn.addEventListener('click', ()=>{ clickSound(); showScreen('homeScreen'); updateHomeStats(); }));
+$('#quickStartBtn').addEventListener('click', ()=>{ clickSound(); showScreen('circleScreen'); });
+$('#howToBtn').addEventListener('click', ()=>{ clickSound(); $('#homeMessage').textContent = '추천 순서: 원 그리기 → 3초 맞추기 → 반응속도. 1게임당 1~2분씩 운영하면 적당합니다.'; });
+$('#bgmToggleBtn').addEventListener('click', ()=>{ state.settings.bgmOn = !state.settings.bgmOn; saveSettings(); applyBgm(); clickSound(); });
+$('#sfxToggleBtn').addEventListener('click', ()=>{ state.settings.sfxOn = !state.settings.sfxOn; saveSettings(); updateSettingButtons(); if(state.settings.sfxOn) clickSound(); });
+$('#resetAllBtn').addEventListener('click', ()=>{ clickSound(); resetAllData(); });
+
+function updateHomeStats(){
+  $('#homeCircleBest').textContent = state.circle.best;
+  $('#homeTimingBest').textContent = state.timing.bestDiff === 99 ? '0.00' : state.timing.bestDiff.toFixed(2);
+  $('#homeReactionBest').textContent = state.reaction.best || 0;
+}
+
+// ===== Circle Game =====
+const circle = {
+  canvas: $('#circleCanvas'),
+  wrap: $('#circleWrap'),
+  ctx: $('#circleCanvas').getContext('2d'),
+  countdownEl: $('#circleCountdown'),
+  burstEl: $('#circleBurst'),
+  scoreEl: $('#circleScore'),
+  bestEl: $('#circleBest'),
+  comboEl: $('#circleCombo'),
+  levelEl: $('#circleLevel'),
+  timerEl: $('#circleTimer'),
+  msgEl: $('#circleMessage'),
+  starsEl: $('#circleStars'),
+  badgeEl: $('#circleModeBadge'),
+  rankEls: [$('#circleRank1'), $('#circleRank2'), $('#circleRank3')]
+};
+function updateCircleUI(){
+  circle.scoreEl.textContent = state.circle.score;
+  circle.bestEl.textContent = state.circle.best;
+  circle.comboEl.textContent = state.circle.combo;
+  circle.levelEl.textContent = state.circle.level;
+  circle.timerEl.textContent = state.circle.timeLeft;
+  circle.badgeEl.textContent = `⏱️ ${state.circle.selectedTime}초 모드`;
+  $('#circleTime5').classList.toggle('active', state.circle.selectedTime === 5);
+  $('#circleTime10').classList.toggle('active', state.circle.selectedTime === 10);
+  $('#circleGuideBtn').textContent = state.circle.showGuide ? '기준 원 숨기기' : '기준 원 보기';
+  circle.starsEl.textContent = '★'.repeat(state.circle.stars) + '☆'.repeat(3 - state.circle.stars);
+  state.circle.ranking.forEach((v,i)=> circle.rankEls[i].textContent = v || 0);
+}
+function fitCircleCanvas(){
+  const rect = circle.wrap.getBoundingClientRect();
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  circle.canvas.width = Math.floor(rect.width * dpr);
+  circle.canvas.height = Math.floor(rect.height * dpr);
+  circle.ctx.setTransform(dpr,0,0,dpr,0,0);
+  setupCircleTarget();
+  drawCircle();
+}
+function setupCircleTarget(){
+  const rect = circle.canvas.getBoundingClientRect();
+  const minSide = Math.min(rect.width, rect.height);
+  const difficultyBoost = Math.min(26, (state.circle.level - 1) * 4);
+  const base = Math.max(58, minSide * 0.26 - difficultyBoost);
+  state.circle.target = { cx: rect.width/2, cy: rect.height/2 + 8, r: base + (Math.random()*10 - 5) };
+}
+function drawCircle(){
+  const rect = circle.canvas.getBoundingClientRect();
+  const ctx = circle.ctx;
+  ctx.clearRect(0,0,rect.width,rect.height);
+  const t = state.circle.target;
+  if(state.circle.showGuide){
+    ctx.save(); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(108,156,255,.42)'; ctx.setLineDash([8,6]); ctx.beginPath(); ctx.arc(t.cx,t.cy,t.r,0,Math.PI*2); ctx.stroke(); ctx.restore();
+  }
+  ctx.save(); ctx.fillStyle = '#ffbe33'; ctx.beginPath(); ctx.arc(t.cx,t.cy,4,0,Math.PI*2); ctx.fill(); ctx.restore();
+  const pts = state.circle.points;
+  if(pts.length > 0){
+    ctx.save(); ctx.strokeStyle='#4f7eff'; ctx.lineWidth=4; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x, pts[i].y); ctx.stroke(); ctx.restore();
+  }
+}
+function circlePos(e){ const rect = circle.canvas.getBoundingClientRect(); const s = e.touches ? e.touches[0] : e; return {x:s.clientX-rect.left, y:s.clientY-rect.top}; }
+function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
+function pathLength(arr){ let len=0; for(let i=1;i<arr.length;i++) len += dist(arr[i-1], arr[i]); return len; }
+function evaluateCircle(){
+  const arr = state.circle.points; const t = state.circle.target;
+  if(arr.length < 18) return {score:0, stars:0, text:'그림이 너무 짧아요. 더 크게 한 바퀴 그려 보세요.', success:false};
+  const ideal = 2*Math.PI*t.r; const len = pathLength(arr);
+  if(len < ideal * 0.55) return {score:0, stars:0, text:'한 바퀴가 충분히 이어지지 않았어요.', success:false};
+  const radialErrors=[], angles=[];
+  for(const p of arr){ const dx=p.x-t.cx, dy=p.y-t.cy, r=Math.hypot(dx,dy); radialErrors.push(Math.abs(r-t.r)); angles.push(Math.atan2(dy,dx)); }
+  const meanError = radialErrors.reduce((a,b)=>a+b,0)/radialErrors.length;
+  const bins = 36, covered = new Set();
+  for(let ang of angles){ if(ang<0) ang += Math.PI*2; covered.add(Math.max(0, Math.min(bins-1, Math.floor((ang/(Math.PI*2))*bins)))); }
+  const coverage = covered.size / bins;
+  const closurePenalty = Math.min(1, dist(arr[0], arr[arr.length-1]) / (t.r * 0.9));
+  const smooths=[];
+  for(let i=2;i<arr.length;i++){ const a=arr[i-2], b=arr[i-1], c=arr[i]; const ab=Math.atan2(b.y-a.y,b.x-a.x); const bc=Math.atan2(c.y-b.y,c.x-b.x); let diff=Math.abs(bc-ab); while(diff>Math.PI) diff=Math.abs(diff-Math.PI*2); smooths.push(diff); }
+  const smoothness = smooths.length ? smooths.reduce((a,b)=>a+b,0)/smooths.length : 1.4;
+  const radialScore=Math.max(0,1-meanError/(t.r*.42));
+  const coverageScore=Math.max(0,Math.min(1,coverage));
+  const closureScore=Math.max(0,1-closurePenalty);
+  const smoothScore=Math.max(0,1-smoothness/1.4);
+  const levelPenalty = Math.min(0.12, (state.circle.level - 1) * 0.01);
+  let score = Math.round(Math.max(0, Math.min(100, ((radialScore*.46 + coverageScore*.28 + closureScore*.16 + smoothScore*.10) - levelPenalty) * 100)));
+  let stars = score>=90?3:score>=75?2:score>=60?1:0;
+  const success = score >= 70;
+  let text='다시 도전해 보세요!';
+  if(score>=95) text='완벽에 가까워요! 정말 예쁜 원이에요!';
+  else if(score>=85) text='아주 잘했어요! 매끈하고 안정적이에요.';
+  else if(score>=70) text='좋아요! 콤보가 이어집니다.';
+  else if(coverage<0.7) text='한 바퀴가 덜 돌아갔어요. 원 전체를 이어 보세요.';
+  else if(meanError>18) text='기준 원과 거리가 들쑥날쑥해요. 천천히 따라가 보세요.';
+  else text='시작점과 끝점을 더 가깝게 붙이면 점수가 올라가요.';
+  return {score, stars, text, success};
+}
+function circleBurst(color){
+  circle.burstEl.innerHTML=''; const count=18;
+  for(let i=0;i<count;i++){ const p=document.createElement('div'); p.className='particle'; p.style.background = i%3===0?color:(i%3===1?'#ffd54a':'#ff8cc6'); p.style.left='50%'; p.style.top='50%'; const ang=(Math.PI*2*i)/count; const d=60+Math.random()*70; p.style.setProperty('--tx', `${Math.cos(ang)*d}px`); p.style.setProperty('--ty', `${Math.sin(ang)*d}px`); circle.burstEl.appendChild(p); }
+  setTimeout(()=> circle.burstEl.innerHTML='', 800);
+}
+function updateCircleRanking(score){ state.circle.ranking.push(score); state.circle.ranking = state.circle.ranking.sort((a,b)=>b-a).slice(0,3); localStorage.setItem('circle_ranking', JSON.stringify(state.circle.ranking)); }
+function finishCircle(byTimeout=false){
+  if(state.circle.roundEnded) return;
+  state.circle.roundEnded = true; state.circle.gameActive = false; clearInterval(state.circle.timerId);
+  const result = evaluateCircle();
+  state.circle.score = result.score; state.circle.stars = result.stars;
+  if(result.score > state.circle.best){ state.circle.best = result.score; localStorage.setItem('circle_best', state.circle.best); }
+  updateCircleRanking(result.score);
+  if(result.success){ state.circle.combo += 1; successSound(false); circleBurst('#7be0c3'); }
+  else { state.circle.combo = 0; failSound(); }
+  if(state.circle.combo >= 3){ state.circle.combo = 0; state.circle.level += 1; localStorage.setItem('circle_level', state.circle.level); successSound(true); circleBurst('#ffd54a'); circle.msgEl.textContent = '🎉 레벨 업! 다음 원은 더 까다로워집니다.'; }
+  else { circle.msgEl.textContent = byTimeout && state.circle.points.length===0 ? '시간이 끝났어요! 다시 도전해 보세요.' : result.text; }
+  updateCircleUI(); updateHomeStats();
+}
+function startCircleTimer(){
+  clearInterval(state.circle.timerId); state.circle.timeLeft = state.circle.selectedTime; updateCircleUI();
+  state.circle.timerId = setInterval(()=>{ state.circle.timeLeft -= 1; updateCircleUI(); if(state.circle.timeLeft <= 0){ clearInterval(state.circle.timerId); finishCircle(true); } },1000);
+}
+function runCircleCountdown(){
+  state.circle.countdownActive = true;
+  const seq=['3','2','1','GO!']; let i=0;
+  circle.countdownEl.textContent = seq[0]; circle.countdownEl.classList.add('show');
+  const id = setInterval(()=>{
+    i += 1;
+    if(i >= seq.length){ clearInterval(id); circle.countdownEl.classList.remove('show'); circle.countdownEl.textContent=''; state.circle.countdownActive = false; beginCircleRound(); return; }
+    circle.countdownEl.textContent = seq[i]; circle.countdownEl.classList.remove('show'); void circle.countdownEl.offsetWidth; circle.countdownEl.classList.add('show');
+  },850);
+}
+function beginCircleRound(){ state.circle.points=[]; state.circle.roundEnded=false; setupCircleTarget(); drawCircle(); state.circle.gameActive=true; circle.msgEl.textContent = `지금부터 ${state.circle.selectedTime}초! 원을 한 바퀴 부드럽게 그려 보세요.`; startCircleTimer(); }
+function startCircleGame(){ clickSound(); if(state.circle.countdownActive) return; clearInterval(state.circle.timerId); state.circle.gameActive=false; state.circle.roundEnded=false; state.circle.points=[]; state.circle.score=0; state.circle.stars=0; drawCircle(); updateCircleUI(); runCircleCountdown(); }
+function resetCircleProgress(){ clickSound(); clearInterval(state.circle.timerId); Object.assign(state.circle,{combo:0, level:1, best:0, ranking:[0,0,0], selectedTime:5, timeLeft:5, score:0, stars:0, points:[], gameActive:false, countdownActive:false, roundEnded:false, showGuide:true}); localStorage.setItem('circle_level','1'); localStorage.setItem('circle_best','0'); localStorage.setItem('circle_ranking','[0,0,0]'); localStorage.setItem('circle_time','5'); circle.msgEl.textContent='초기화했습니다. 레벨 1, 최고 점수 0점으로 돌아갔습니다.'; updateCircleUI(); fitCircleCanvas(); updateHomeStats(); }
+$('#circleStartBtn').addEventListener('click', startCircleGame);
+$('#circleRetryBtn').addEventListener('click', startCircleGame);
+$('#circleNextBtn').addEventListener('click', ()=>{ clickSound(); state.circle.level += 1; localStorage.setItem('circle_level', state.circle.level); state.circle.combo = 0; circle.msgEl.textContent = `레벨 ${state.circle.level}로 이동했습니다. 시작 버튼을 눌러 도전하세요.`; updateCircleUI(); fitCircleCanvas(); });
+$('#circleResetBtn').addEventListener('click', resetCircleProgress);
+$('#circleClearBtn').addEventListener('click', ()=>{ clickSound(); state.circle.points=[]; drawCircle(); circle.msgEl.textContent = state.circle.gameActive ? '그림을 지웠어요. 남은 시간 안에 다시 그려 보세요.' : '그림을 지웠어요. 다시 시작해 보세요.'; });
+$('#circleGuideBtn').addEventListener('click', ()=>{ clickSound(); state.circle.showGuide=!state.circle.showGuide; updateCircleUI(); drawCircle(); });
+$('#circleTime5').addEventListener('click', ()=>{ clickSound(); state.circle.selectedTime=5; state.circle.timeLeft=5; localStorage.setItem('circle_time','5'); updateCircleUI(); circle.msgEl.textContent='5초 모드로 설정했습니다.'; });
+$('#circleTime10').addEventListener('click', ()=>{ clickSound(); state.circle.selectedTime=10; state.circle.timeLeft=10; localStorage.setItem('circle_time','10'); updateCircleUI(); circle.msgEl.textContent='10초 모드로 설정했습니다.'; });
+function beginCirclePointer(e){ if(!state.circle.gameActive || state.circle.countdownActive || state.circle.roundEnded) return; e.preventDefault(); state.circle.drawing=true; state.circle.points=[circlePos(e)]; drawCircle(); }
+function moveCirclePointer(e){ if(!state.circle.drawing || !state.circle.gameActive) return; e.preventDefault(); const p = circlePos(e); const last = state.circle.points[state.circle.points.length-1]; if(!last || dist(last,p)>1.4){ state.circle.points.push(p); drawCircle(); } }
+function endCirclePointer(e){ if(!state.circle.drawing) return; e.preventDefault(); state.circle.drawing=false; }
+circle.canvas.addEventListener('mousedown', beginCirclePointer); circle.canvas.addEventListener('mousemove', moveCirclePointer); window.addEventListener('mouseup', endCirclePointer); circle.canvas.addEventListener('touchstart', beginCirclePointer, {passive:false}); circle.canvas.addEventListener('touchmove', moveCirclePointer, {passive:false}); window.addEventListener('touchend', endCirclePointer, {passive:false});
+
+// ===== Timing Game =====
+const timing = {
+  nowEl: $('#timingNow'), diffEl: $('#timingDiff'), bestEl: $('#timingBest'), triesEl: $('#timingTries'), starsEl: $('#timingStars'), msgEl: $('#timingMessage'), displayEl: $('#timingDisplay'), subEl: $('#timingSub')
+};
+function updateTimingUI(now=0, diff=0, stars=0){
+  timing.nowEl.textContent = now.toFixed(2);
+  timing.diffEl.textContent = diff.toFixed(2);
+  timing.bestEl.textContent = state.timing.bestDiff === 99 ? '0.00' : state.timing.bestDiff.toFixed(2);
+  timing.triesEl.textContent = state.timing.tries;
+  timing.starsEl.textContent = '★'.repeat(stars) + '☆'.repeat(3-stars);
+}
+function resetTimingDisplay(){ timing.displayEl.textContent = '3.00'; timing.subEl.textContent = '준비 완료'; }
+function startTimingGame(){
+  clickSound(); if(state.timing.running) return;
+  state.timing.running = true; state.timing.startAt = performance.now();
+  timing.msgEl.textContent = '3초라고 느껴지는 순간 정지 버튼을 누르세요.';
+  timing.subEl.textContent = '측정 중...';
+  state.timing.timerId = setInterval(()=>{ const now = (performance.now() - state.timing.startAt)/1000; timing.displayEl.textContent = now.toFixed(2); }, 10);
+}
+function stopTimingGame(){
+  clickSound(); if(!state.timing.running) return;
+  clearInterval(state.timing.timerId); state.timing.running = false; state.timing.tries += 1; localStorage.setItem('timing_tries', state.timing.tries);
+  const now = (performance.now() - state.timing.startAt)/1000; const diff = Math.abs(3 - now);
+  let stars = diff <= .05 ? 3 : diff <= .15 ? 2 : diff <= .30 ? 1 : 0;
+  timing.displayEl.textContent = now.toFixed(2); timing.subEl.textContent = diff === 0 ? '완벽!' : `${diff.toFixed(2)}초 차이`;
+  if(diff < state.timing.bestDiff){ state.timing.bestDiff = diff; localStorage.setItem('timing_best', diff); }
+  timing.msgEl.textContent = diff <= .05 ? '정말 정확해요! 거의 완벽합니다.' : diff <= .15 ? '아주 좋아요! 타이밍 감각이 뛰어나네요.' : diff <= .30 ? '좋아요! 조금만 더 맞추면 됩니다.' : '조금 빨랐거나 늦었어요. 다시 도전해 보세요.';
+  if(stars > 0) successSound(false); else failSound();
+  updateTimingUI(now, diff, stars); updateHomeStats();
+}
+function resetTimingGame(){ clickSound(); clearInterval(state.timing.timerId); state.timing.running=false; state.timing.bestDiff=99; state.timing.tries=0; localStorage.removeItem('timing_best'); localStorage.removeItem('timing_tries'); resetTimingDisplay(); timing.msgEl.textContent='초기화했습니다. 다시 3초에 도전해 보세요.'; updateTimingUI(0,0,0); updateHomeStats(); }
+$('#timingStartBtn').addEventListener('click', startTimingGame);
+$('#timingStopBtn').addEventListener('click', stopTimingGame);
+$('#timingResetBtn').addEventListener('click', resetTimingGame);
+
+// ===== Reaction Game =====
+const reaction = {
+  nowEl: $('#reactionNow'), bestEl: $('#reactionBest'), avgEl: $('#reactionAvg'), triesEl: $('#reactionTries'), stateEl: $('#reactionState'), msgEl: $('#reactionMessage'), area: $('#reactionArea')
+};
+function reactionAvg(){ if(state.reaction.history.length===0) return 0; return Math.round(state.reaction.history.reduce((a,b)=>a+b,0)/state.reaction.history.length); }
+function updateReactionUI(now=0){
+  reaction.nowEl.textContent = now || 0;
+  reaction.bestEl.textContent = state.reaction.best || 0;
+  reaction.avgEl.textContent = reactionAvg() || 0;
+  reaction.triesEl.textContent = state.reaction.tries;
+  reaction.stateEl.textContent = state.reaction.phase === 'armed' ? '대기' : state.reaction.phase === 'go' ? '반응' : state.reaction.phase === 'fail' ? '실패' : '대기';
+}
+function setReactionArea(type, text){ reaction.area.className = `reaction-box ${type}`; reaction.area.textContent = text; }
+function startReactionGame(){
+  clickSound(); clearTimeout(state.reaction.startTimeout); state.reaction.phase = 'armed'; updateReactionUI();
+  reaction.msgEl.textContent = '기다리세요... 초록색으로 바뀌면 즉시 누르세요.'; setReactionArea('reaction-wait','기다리세요...');
+  const delay = 1200 + Math.random()*2200;
+  state.reaction.startTimeout = setTimeout(()=>{ state.reaction.phase = 'go'; state.reaction.greenAt = performance.now(); updateReactionUI(); setReactionArea('reaction-go','지금 누르세요!'); successSound(false); }, delay);
+}
+function tapReaction(){
+  clickSound();
+  if(state.reaction.phase === 'armed'){
+    clearTimeout(state.reaction.startTimeout); state.reaction.phase = 'fail'; setReactionArea('reaction-fail','너무 빨라요!'); reaction.msgEl.textContent = '아직 바뀌기 전에 눌렀어요. 다시 도전해 보세요.'; failSound(); updateReactionUI(0); return;
+  }
+  if(state.reaction.phase !== 'go') return;
+  const ms = Math.round(performance.now() - state.reaction.greenAt);
+  state.reaction.phase = 'idle'; state.reaction.tries += 1; state.reaction.history.push(ms); state.reaction.history = state.reaction.history.slice(-20);
+  if(state.reaction.best === 0 || ms < state.reaction.best) state.reaction.best = ms;
+  localStorage.setItem('reaction_best', state.reaction.best); localStorage.setItem('reaction_tries', state.reaction.tries); localStorage.setItem('reaction_history', JSON.stringify(state.reaction.history));
+  setReactionArea('reaction-go', `${ms} ms`);
+  reaction.msgEl.textContent = ms <= 250 ? '엄청 빠릅니다! 순발력이 아주 좋네요.' : ms <= 350 ? '좋아요! 반응이 빠른 편입니다.' : '괜찮아요. 한 번 더 도전하면 더 빨라질 수 있어요.';
+  successSound(false); updateReactionUI(ms); updateHomeStats();
+}
+function resetReactionGame(){ clickSound(); clearTimeout(state.reaction.startTimeout); state.reaction = { ...state.reaction, best:0, tries:0, history:[], phase:'idle', startTimeout:null, greenAt:0, now:0 }; localStorage.removeItem('reaction_best'); localStorage.removeItem('reaction_tries'); localStorage.removeItem('reaction_history'); setReactionArea('reaction-wait','시작을 눌러 준비하세요'); reaction.msgEl.textContent='초기화했습니다. 다시 시작해 보세요.'; updateReactionUI(0); updateHomeStats(); }
+$('#reactionStartBtn').addEventListener('click', startReactionGame);
+$('#reactionTapBtn').addEventListener('click', tapReaction);
+$('#reactionArea').addEventListener('click', tapReaction);
+$('#reactionResetBtn').addEventListener('click', resetReactionGame);
+
+function resetAllData(){
+  Object.keys(localStorage).forEach(k=>{ if(k.startsWith('circle_') || k.startsWith('timing_') || k.startsWith('reaction_') || k === 'mg_bgm' || k === 'mg_sfx') localStorage.removeItem(k); });
+  state.settings = { bgmOn:false, sfxOn:true };
+  Object.assign(state.circle, { best:0, level:1, ranking:[0,0,0], selectedTime:5, combo:0, timeLeft:5, score:0, stars:0, showGuide:true, drawing:false, points:[], gameActive:false, countdownActive:false, roundEnded:false, timerId:null });
+  state.timing = { bestDiff:99, tries:0, running:false, startAt:0, timerId:null, now:0 };
+  state.reaction = { best:0, tries:0, history:[], phase:'idle', startTimeout:null, greenAt:0, now:0 };
+  stopBgm(); saveSettings(); updateSettingButtons(); updateHomeStats(); updateCircleUI(); resetTimingDisplay(); updateTimingUI(0,0,0); setReactionArea('reaction-wait','시작을 눌러 준비하세요'); updateReactionUI(0); fitCircleCanvas(); drawCircle(); $('#homeMessage').textContent = '전체 기록을 초기화했습니다.';
+}
+
+window.addEventListener('resize', ()=>{ fitCircleCanvas(); });
+window.addEventListener('orientationchange', ()=> setTimeout(fitCircleCanvas, 250));
+
+updateSettingButtons(); applyBgm(); updateHomeStats(); updateCircleUI(); updateTimingUI(0,0,0); resetTimingDisplay(); updateReactionUI(0); setReactionArea('reaction-wait','시작을 눌러 준비하세요'); fitCircleCanvas(); drawCircle();
+</script>
+</body>
+</html>
