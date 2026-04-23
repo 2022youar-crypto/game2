@@ -72,7 +72,9 @@ body::after{
 .header-row,.game-top{
   position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center;gap:8px;
 }
-.header h1,.game-title{margin:0;font-size:22px;font-weight:900;letter-spacing:-.3px}
+.header-row{justify-content:center;text-align:center}
+#homeScreen .header .sub{display:none}
+.header h1,.game-title{margin:0;font-size:28px;font-weight:900;letter-spacing:-.3px}
 .header h1::after{content:" ✨";font-size:.95em}
 .sub{position:relative;z-index:1;margin-top:7px;font-size:12px;line-height:1.45;opacity:.98}
 .badge{
@@ -91,29 +93,41 @@ body::after{
 }
 .menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .menu-card{
-  background:linear-gradient(180deg,#fffdfa,#fff6f1);
-  border:1px solid var(--line);border-radius:26px;padding:15px 13px;min-height:138px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 10px 22px rgba(77,102,170,.07), inset 0 1px 0 rgba(255,255,255,.95)
+  position:relative;overflow:hidden;
+  border:1px solid var(--line);border-radius:30px;
+  min-height:122px;padding:16px;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  box-shadow:0 14px 24px rgba(77,102,170,.09), inset 0 1px 0 rgba(255,255,255,.95);
+  transition:transform .16s ease, box-shadow .16s ease, filter .16s ease;
 }
-.menu-card h3{margin:0;font-size:18px}
-
-.menu-card h3{display:flex;align-items:center;gap:6px}
+.menu-card:hover{filter:brightness(1.03)}
+.menu-card:active{transform:translateY(-2px) scale(.97)}
+.menu-card h3{
+  margin:0;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  font-size:24px;font-weight:900;line-height:1.2;
+  position:relative;z-index:2;
+}
 .menu-card::before{
   content:"";position:absolute;width:54px;height:54px;right:10px;top:10px;border-radius:18px;
   background:rgba(255,255,255,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
 }
-.menu-card{position:relative;overflow:hidden}
 .menu-card::after{
   content:"";position:absolute;left:-18px;bottom:-18px;width:76px;height:76px;border-radius:50%;background:rgba(255,255,255,.34);
 }
+.menu-card:nth-child(1)::before{content:"🫧";font-size:26px;display:flex;align-items:center;justify-content:center}
+.menu-card:nth-child(2)::before{content:"⏰";font-size:26px;display:flex;align-items:center;justify-content:center}
+.menu-card:nth-child(3)::before{content:"🌟";font-size:26px;display:flex;align-items:center;justify-content:center}
+.menu-card:nth-child(4)::before{content:"🎈";font-size:26px;display:flex;align-items:center;justify-content:center}
 .header{border:2px solid rgba(255,255,255,.32)}
 .card{border:1px solid #f3dfd1}
 
 .menu-card p{margin:6px 0 0;color:var(--sub);font-size:12px;line-height:1.4}
 .menu-card .meta{color:#5a7bf0;font-size:12px;font-weight:900}
-.menu-card:nth-child(1){background:linear-gradient(180deg,#fffdfa,#fff1e8)}
-.menu-card:nth-child(2){background:linear-gradient(180deg,#fffdf9,#fff0e2)}
-.menu-card:nth-child(3){background:linear-gradient(180deg,#fffdfa,#ffefe6)}
-.menu-card:nth-child(4){background:linear-gradient(180deg,#fff9f4,#ffe8d8)}
+.menu-card:nth-child(1){background:linear-gradient(180deg,#fff5ef,#ffe4d6);color:#cf6d4d}
+.menu-card:nth-child(2){background:linear-gradient(180deg,#fff8ef,#ffe7c8);color:#c27a2c}
+.menu-card:nth-child(3){background:linear-gradient(180deg,#fff4f1,#ffd9cd);color:#ca6f5a}
+.menu-card:nth-child(4){background:linear-gradient(180deg,#fff8f3,#ffe0d2);color:#c96f42}
 .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .small-stat{background:linear-gradient(180deg,#fffdfa,#fff3ec);border:1px solid #edf2fb;border-radius:20px;padding:11px 8px;text-align:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
 .small-stat .label{font-size:11px;color:var(--sub);margin-bottom:4px}
@@ -196,9 +210,10 @@ button:active{transform:scale(.965)}
   position:absolute;right:12px;bottom:10px;font-size:26px;filter:drop-shadow(0 3px 6px rgba(255,255,255,.35));
 }
 @media (max-width:390px){
-  .header h1,.game-title{font-size:20px}
+  .header h1,.game-title{font-size:22px}
   .inline-stat .value,.small-stat .value{font-size:15px}
-  .menu-card{min-height:126px}
+  .menu-card{min-height:104px}
+  .menu-card h3{font-size:20px}
   button{font-size:12px;min-height:40px}
 }
 @media (orientation:landscape) and (max-height:540px){
@@ -214,41 +229,24 @@ button:active{transform:scale(.965)}
     <div class="header">
       <div class="header-row">
         <h1>🎮 미니게임 모음집</h1>
-        <div class="badge">모바일 최적화</div>
+        
       </div>
-      <div class="sub">살구빛 톤의 아기자기한 미니게임 화면으로 다시 꾸몄습니다. 원하는 게임을 눌러 바로 시작하세요.</div>
       <div class="home-mascot">🐰</div>
     </div>
 
     <div class="card">
       <div class="menu-grid">
-        <button class="menu-card" data-open="circleScreen">
-          <div>
-            <h3>⭕ 원 그리기</h3>
-            <p>원을 최대한 예쁘고 둥글게 그려 높은 점수를 얻는 귀여운 집중 게임</p>
-          </div>
-          <div class="meta">정확도 · 콤보 · 레벨</div>
+        <button class="menu-card" data-open="circleScreen" type="button">
+          <h3>🫧 원 그리기</h3>
         </button>
-        <button class="menu-card" data-open="timingScreen">
-          <div>
-            <h3>⏱️ 3초 맞추기</h3>
-            <p>3초라고 느껴지는 순간 멈춰 감각 정확도를 겨루는 타이밍 게임</p>
-          </div>
-          <div class="meta">타이밍 · 감각 · 몰입</div>
+        <button class="menu-card" data-open="timingScreen" type="button">
+          <h3>⏰ 3초 맞추기</h3>
         </button>
-        <button class="menu-card" data-open="reactionScreen">
-          <div>
-            <h3>⚡ 반응속도</h3>
-            <p>화면이 바뀌는 순간 빠르게 눌러 반응 시간을 확인하는 순발력 게임</p>
-          </div>
-          <div class="meta">집중 · 순발력 · 경쟁</div>
+        <button class="menu-card" data-open="reactionScreen" type="button">
+          <h3>🌟 반응속도</h3>
         </button>
-        <button class="menu-card" data-open="balloonScreen" type="button" style="text-align:left">
-          <div>
-            <h3>🎈 풍선 톡톡</h3>
-            <p>제한 시간 안에 풍선을 많이 톡톡 터뜨려 점수를 얻는 귀여운 손가락 게임</p>
-          </div>
-          <div class="meta">속도 · 집중 · 손놀림</div>
+        <button class="menu-card" data-open="balloonScreen" type="button">
+          <h3>🎈 풍선 톡톡</h3>
         </button>
       </div>
     </div>
@@ -276,7 +274,7 @@ button:active{transform:scale(.965)}
       </div>
     </div>
 
-    <div class="message" id="homeMessage">원 그리기부터 시작하면 가장 자연스럽게 분위기를 띄울 수 있습니다.</div>
+    <div class="message" id="homeMessage">하고 싶은 게임을 바로 눌러 시작하세요.</div>
     
   </section>
 
